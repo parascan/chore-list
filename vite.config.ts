@@ -1,0 +1,28 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  base: '/chore-list/',
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Chore Tracker',
+        short_name: 'Chores',
+        description: 'Family chore checklist tracker',
+        theme_color: '#16a34a',
+        background_color: '#f0fdf4',
+        display: 'standalone',
+        start_url: '/chore-list/',
+        scope: '/chore-list/',
+        orientation: 'portrait',
+        icons: [
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
+      },
+    }),
+  ],
+})
