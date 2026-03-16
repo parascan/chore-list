@@ -41,6 +41,18 @@ export function getDefaultChores(): Chore[] {
   return items.map(c => ({ ...c, id: crypto.randomUUID(), addedAt: now }));
 }
 
+// ── Auth helpers ─────────────────────────────────────────────────────────────
+
+function ensureAuth(): Promise<void> {
+  if (auth.currentUser) return Promise.resolve();
+  return new Promise(resolve => {
+    const unsub = onAuthStateChanged(auth, user => {
+      if (user) { unsub(); resolve(); }
+    });
+    signInAnonymously(auth).catch(console.error);
+  });
+}
+
 // ── Firestore CRUD ───────────────────────────────────────────────────────────
 
 export function subscribeChores(
@@ -84,10 +96,12 @@ async function seedChores(chores: Chore[]): Promise<void> {
 }
 
 export async function saveChore(chore: Chore): Promise<void> {
+  await ensureAuth();
   await setDoc(doc(db, CHORES_COL, chore.id), chore);
 }
 
 export async function removeChore(id: string): Promise<void> {
+  await ensureAuth();
   await deleteDoc(doc(db, CHORES_COL, id));
 }
 
