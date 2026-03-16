@@ -6,7 +6,8 @@ import {
   deleteDoc,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from './firebase';
 import type { Chore, Frequency } from './types';
 import { FREQUENCY_DAYS } from './types';
 
@@ -46,18 +47,32 @@ export function subscribeChores(
   onData: (chores: Chore[]) => void,
   onSeeded: (chores: Chore[]) => void,
 ): () => void {
-  return onSnapshot(collection(db, CHORES_COL), snapshot => {
-    if (snapshot.empty) {
-      // First time — seed with defaults
-      const defaults = getDefaultChores();
-      seedChores(defaults).then(() => onSeeded(defaults));
-    } else {
-      const chores = snapshot.docs.map(d => d.data() as Chore);
-      // Sort by addedAt ascending so order is stable
-      chores.sort((a, b) => a.addedAt.localeCompare(b.addedAt));
-      onData(chores);
+  let unsubSnapshot: (() => void) | null = null;
+
+  // Sign in anonymously — required by Firestore security rules
+  signInAnonymously(auth).catch(console.error);
+
+  const unsubAuth = onAuthStateChanged(auth, user => {
+    if (user && !unsubSnapshot) {
+      unsubSnapshot = onSnapshot(collection(db, CHORES_COL), snapshot => {
+        if (snapshot.empty) {
+          // First time — seed with defaults
+          const defaults = getDefaultChores();
+          seedChores(defaults).then(() => onSeeded(defaults));
+        } else {
+          const chores = snapshot.docs.map(d => d.data() as Chore);
+          // Sort by addedAt ascending so order is stable
+          chores.sort((a, b) => a.addedAt.localeCompare(b.addedAt));
+          onData(chores);
+        }
+      });
     }
   });
+
+  return () => {
+    unsubAuth();
+    unsubSnapshot?.();
+  };
 }
 
 async function seedChores(chores: Chore[]): Promise<void> {
