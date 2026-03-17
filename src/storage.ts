@@ -97,7 +97,8 @@ async function seedChores(chores: Chore[]): Promise<void> {
 
 export async function saveChore(chore: Chore): Promise<void> {
   await ensureAuth();
-  await setDoc(doc(db, CHORES_COL, chore.id), chore);
+  const data = Object.fromEntries(Object.entries(chore).filter(([, v]) => v !== undefined));
+  await setDoc(doc(db, CHORES_COL, chore.id), data);
 }
 
 export async function removeChore(id: string): Promise<void> {
