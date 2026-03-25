@@ -58,23 +58,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VISUAL-01 | — | Pending |
-| VISUAL-02 | — | Pending |
-| TOUCH-01 | — | Pending |
-| TOUCH-02 | — | Pending |
-| TOUCH-03 | — | Pending |
-| TOUCH-04 | — | Pending |
-| HIST-01 | — | Pending |
-| HIST-02 | — | Pending |
-| SNOOZE-01 | — | Pending |
-| SEARCH-01 | — | Pending |
-| SORT-01 | — | Pending |
+| VISUAL-01 | Phase 1 | Pending |
+| VISUAL-02 | Phase 1 | Pending |
+| TOUCH-01 | Phase 2 | Pending |
+| TOUCH-02 | Phase 2 | Pending |
+| TOUCH-03 | Phase 2 | Pending |
+| TOUCH-04 | Phase 2 | Pending |
+| HIST-01 | Phase 3 | Pending |
+| HIST-02 | Phase 3 | Pending |
+| SNOOZE-01 | Phase 4 | Pending |
+| SEARCH-01 | Phase 4 | Pending |
+| SORT-01 | Phase 4 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11 ⚠️
+- Mapped to phases: 11
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after roadmap creation*
