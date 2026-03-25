@@ -22,11 +22,25 @@ The household always knows what needs doing and when — chores never fall throu
 - ✓ App is mobile-first with a sticky header and FAB — v1.0
 - ✓ App seeds sensible default chores on first load — v1.0
 
+## Current Milestone: v1.1 Polish & Power
+
+**Goal:** Make the app feel polished and powerful — better visuals, native touch, completion history with streaks, and quick find/defer tools.
+
+**Target features:**
+- Visual redesign + auto dark mode
+- Swipe gestures + touch-friendly actions + in-app delete dialog
+- Streak counter + completion history log
+- 1-day snooze, keyword search, sort by name/due date
+
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-(To be defined in v1.1 milestone)
+- [ ] VISUAL-01/02: Modernized design with auto dark mode
+- [ ] TOUCH-01–04: Swipe gestures, always-visible actions, in-app dialog
+- [ ] HIST-01/02: Streak counter + completion history log
+- [ ] SNOOZE-01: 1-day snooze
+- [ ] SEARCH-01 / SORT-01: Keyword search + sort by name/due date
 
 ### Out of Scope
 
