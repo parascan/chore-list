@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import type { Chore } from './types';
 import { FREQUENCY_ORDER, FREQUENCY_LABELS, FREQUENCY_COLORS } from './types';
-import { subscribeChores, saveChore, removeChore, isDue } from './storage';
+import { subscribeChores, saveChore, removeChore, isDue, dueOffset } from './storage';
 import ChoreCard from './components/ChoreCard';
 import AddChoreModal from './components/AddChoreModal';
+import ConfirmDialog from './components/ConfirmDialog';
+import ChoreHistoryModal from './components/ChoreHistoryModal';
 import './App.css';
 
 type Filter = 'due' | 'all' | 'done';
+type Sort = 'default' | 'name' | 'due';
 
 export default function App() {
   const [chores, setChores] = useState<Chore[]>([]);
@@ -14,6 +17,10 @@ export default function App() {
   const [filter, setFilter] = useState<Filter>('due');
   const [showAdd, setShowAdd] = useState(false);
   const [editingChore, setEditingChore] = useState<Chore | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [historyChore, setHistoryChore] = useState<Chore | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sort, setSort] = useState<Sort>('default');
 
   useEffect(() => {
     const unsub = subscribeChores(
@@ -26,15 +33,33 @@ export default function App() {
   async function handleComplete(id: string, done: boolean) {
     const chore = chores.find(c => c.id === id);
     if (!chore) return;
+    const now = new Date().toISOString();
+    const completionHistory = done
+      ? [...(chore.completionHistory ?? []), { date: now, onTime: dueOffset(chore) <= 0 }]
+      : chore.completionHistory;
     await saveChore({
       ...chore,
-      lastCompleted: done ? new Date().toISOString() : undefined,
+      lastCompleted: done ? now : undefined,
+      completionHistory,
+      snoozedUntil: undefined,
     });
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this chore?')) return;
-    await removeChore(id);
+  async function handleSnooze(id: string) {
+    const chore = chores.find(c => c.id === id);
+    if (!chore) return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    await saveChore({ ...chore, snoozedUntil: tomorrow.toISOString() });
+  }
+
+  function handleDelete(id: string) {
+    setConfirmDeleteId(id);
+  }
+
+  async function handleConfirmDelete() {
+    if (confirmDeleteId) await removeChore(confirmDeleteId);
+    setConfirmDeleteId(null);
   }
 
   async function handleSave(chore: Chore) {
@@ -54,6 +79,7 @@ export default function App() {
   }
 
   const filtered = chores.filter(c => {
+    if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (filter === 'due') return isDue(c);
     if (filter === 'done') return !isDue(c);
     return true;
@@ -67,6 +93,15 @@ export default function App() {
     const doneInFreq = totalInFreq.filter(c => !isDue(c)).length;
     return { freq, chores: group, total: totalInFreq.length, done: doneInFreq };
   }).filter(g => g.chores.length > 0);
+
+  const sortedFlat = sort !== 'default' ? [...filtered].sort((a, b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    const ao = !a.lastCompleted ? 9999 : dueOffset(a);
+    const bo = !b.lastCompleted ? 9999 : dueOffset(b);
+    return bo - ao;
+  }) : [];
+
+  const isEmpty = sort === 'default' ? grouped.length === 0 : filtered.length === 0;
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
@@ -121,18 +156,63 @@ export default function App() {
       </header>
 
       <main className="ch-main">
-        {grouped.length === 0 ? (
+        <div className="ch-toolbar">
+          <input
+            className="ch-search"
+            type="search"
+            placeholder="Search chores…"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          <div className="ch-sort-row">
+            <span className="ch-sort-label">Sort:</span>
+            {(['default', 'name', 'due'] as Sort[]).map(s => (
+              <button
+                key={s}
+                className={`ch-sort-btn${sort === s ? ' active' : ''}`}
+                onClick={() => setSort(s)}
+              >
+                {s === 'default' ? 'Grouped' : s === 'name' ? 'A–Z' : 'By Due'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {isEmpty ? (
           <div className="ch-empty">
-            {filter === 'due' && <span className="ch-empty-icon">🎉</span>}
-            {filter === 'done' && <span className="ch-empty-icon">📋</span>}
-            {filter === 'all' && <span className="ch-empty-icon">✨</span>}
-            <p>
-              {filter === 'due'
-                ? 'All chores are done!'
-                : filter === 'done'
-                ? 'No completed chores yet'
-                : 'No chores yet. Tap + to add one.'}
-            </p>
+            {searchQuery ? (
+              <>
+                <span className="ch-empty-icon">🔍</span>
+                <p>No chores match "{searchQuery}"</p>
+              </>
+            ) : (
+              <>
+                {filter === 'due' && <span className="ch-empty-icon">🎉</span>}
+                {filter === 'done' && <span className="ch-empty-icon">📋</span>}
+                {filter === 'all' && <span className="ch-empty-icon">✨</span>}
+                <p>
+                  {filter === 'due'
+                    ? 'All chores are done!'
+                    : filter === 'done'
+                    ? 'No completed chores yet'
+                    : 'No chores yet. Tap + to add one.'}
+                </p>
+              </>
+            )}
+          </div>
+        ) : sort !== 'default' ? (
+          <div className="ch-group-list" style={{ padding: '0 12px' }}>
+            {sortedFlat.map(chore => (
+              <ChoreCard
+                key={chore.id}
+                chore={chore}
+                onComplete={handleComplete}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onSnooze={handleSnooze}
+                onViewHistory={setHistoryChore}
+              />
+            ))}
           </div>
         ) : (
           grouped.map(({ freq, chores: groupChores, total, done }) => (
@@ -158,6 +238,8 @@ export default function App() {
                     onComplete={handleComplete}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onSnooze={handleSnooze}
+                    onViewHistory={setHistoryChore}
                   />
                 ))}
               </div>
@@ -180,6 +262,21 @@ export default function App() {
           initial={editingChore}
           onSave={handleSave}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {historyChore && (
+        <ChoreHistoryModal
+          chore={historyChore}
+          onClose={() => setHistoryChore(null)}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmDialog
+          message={`Delete "${chores.find(c => c.id === confirmDeleteId)?.name ?? 'this chore'}"?`}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmDeleteId(null)}
         />
       )}
     </div>

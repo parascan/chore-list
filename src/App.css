@@ -15,7 +15,28 @@
   --warning: #f59e0b;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --radius: 12px;
-  --radius-sm: 8px;
+  --radius-sm: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1a12;
+    --surface: #1a2b1e;
+    --surface-hover: #1f3325;
+    --border: #2d4535;
+    --border-light: #243b2a;
+    --text: #f0fdf4;
+    --text-muted: #9ca3af;
+    --text-light: #6b7280;
+    --primary-light: #14532d;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  .ch-status.overdue  { background: #3b1515; color: #f87171; }
+  .ch-status.due      { background: #3b2010; color: #fb923c; }
+  .ch-status.upcoming { background: #14532d; color: #4ade80; }
+  .ch-status.done-status { background: #14532d; color: #4ade80; }
+  .ch-status.never    { background: #3b1515; color: #f87171; }
 }
 
 /* ── App Shell ─────────────────────────────────────────── */
@@ -137,7 +158,72 @@
 /* ── Main Content ──────────────────────────────────────── */
 .ch-main {
   flex: 1;
-  padding: 16px 0 0;
+  padding: 12px 0 0;
+}
+
+/* ── Toolbar (search + sort) ───────────────────────────── */
+.ch-toolbar {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ch-search {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.ch-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.ch-sort-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ch-sort-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ch-sort-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.ch-sort-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.ch-sort-btn:not(.active):hover {
+  border-color: var(--text-muted);
+  color: var(--text);
 }
 
 .ch-bottom-spacer {
@@ -180,7 +266,7 @@
 }
 
 .ch-group-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -224,18 +310,54 @@
   padding: 0 12px;
 }
 
+/* ── Swipe Wrapper ─────────────────────────────────────── */
+.ch-swipe-wrapper {
+  position: relative;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.ch-swipe-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.ch-swipe-hint--complete {
+  background: var(--primary);
+  color: white;
+  justify-content: flex-start;
+}
+
+.ch-swipe-hint--delete {
+  background: var(--danger);
+  color: white;
+  justify-content: flex-end;
+}
+
 /* ── Chore Card ────────────────────────────────────────── */
 .ch-card {
   background: var(--surface);
   border-radius: var(--radius-sm);
-  padding: 11px 12px;
+  padding: 13px 14px;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   box-shadow: var(--shadow);
   transition: box-shadow 0.15s, opacity 0.2s;
   position: relative;
+  border-left: 3px solid transparent;
+  touch-action: pan-y;
 }
+
+.ch-card.ch-card--overdue { border-left-color: var(--danger); }
+.ch-card.ch-card--due     { border-left-color: var(--warning); }
+.ch-card.ch-card--never   { border-left-color: var(--danger); }
 
 .ch-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -283,10 +405,10 @@
 }
 
 .ch-card-name {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 15.5px;
+  font-weight: 600;
   color: var(--text);
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -300,7 +422,7 @@
 .ch-card-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -338,8 +460,31 @@
 }
 
 .ch-last-done {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-light);
+  letter-spacing: 0.01em;
+}
+
+.ch-streak {
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  background: #fef3c7;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.ch-streak--lg {
+  font-size: 14px;
+  padding: 3px 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ch-streak { background: #3b2a00; color: #fbbf24; }
+}
+
+.ch-card-body {
+  cursor: pointer;
 }
 
 .ch-card-notes {
@@ -393,6 +538,11 @@
   color: var(--danger);
 }
 
+.ch-icon-btn.snooze:hover {
+  background: #fffbeb;
+  color: var(--warning);
+}
+
 /* ── FAB ───────────────────────────────────────────────── */
 .ch-fab {
   position: fixed;
@@ -435,6 +585,10 @@
   align-items: flex-end;
   justify-content: center;
   animation: fadeIn 0.15s ease;
+}
+
+.ch-overlay--center {
+  align-items: center;
 }
 
 @media (min-width: 600px) {
@@ -574,4 +728,105 @@
 
 .ch-btn-secondary:hover {
   background: var(--border);
+}
+
+.ch-btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.ch-btn-danger:hover {
+  background: #b91c1c;
+}
+
+/* ── Confirm Dialog ────────────────────────────────────── */
+.ch-confirm-dialog {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  width: calc(100% - 48px);
+  max-width: 320px;
+  animation: slideUp 0.2s ease;
+}
+
+.ch-confirm-message {
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 0 20px;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.ch-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── History Modal ─────────────────────────────────────── */
+.ch-history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ch-history-header .ch-modal-title {
+  margin: 0;
+  flex: 1;
+}
+
+.ch-history-empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+  margin: 0;
+}
+
+.ch-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.ch-history-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ch-history-entry:last-child {
+  border-bottom: none;
+}
+
+.ch-history-date {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.ch-history-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.ch-history-entry.on-time .ch-history-status {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.ch-history-entry.late .ch-history-status {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ch-history-entry.on-time .ch-history-status { background: #14532d; color: #4ade80; }
+  .ch-history-entry.late .ch-history-status    { background: #3b1515; color: #f87171; }
 }

@@ -29,6 +29,8 @@ export default function AddChoreModal({ initial, onSave, onClose }: Props) {
       notes: notes.trim() || undefined,
       lastCompleted: initial?.lastCompleted,
       addedAt: initial?.addedAt ?? new Date().toISOString(),
+      completionHistory: initial?.completionHistory,
+      snoozedUntil: initial?.snoozedUntil,
     };
     onSave(chore);
   }

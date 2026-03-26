@@ -45,6 +45,11 @@ export const FREQUENCY_COLORS: Record<Frequency, string> = {
   once: '#6b7280',
 };
 
+export interface CompletionEntry {
+  date: string;    // ISO date string
+  onTime: boolean; // completed on or before due date
+}
+
 export interface Chore {
   id: string;
   name: string;
@@ -52,4 +57,6 @@ export interface Chore {
   lastCompleted?: string; // ISO date string
   notes?: string;
   addedAt: string;
+  completionHistory?: CompletionEntry[];
+  snoozedUntil?: string; // ISO date — chore hidden from Due until this date passes
 }

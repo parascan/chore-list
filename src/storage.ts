@@ -116,6 +116,9 @@ export function daysBetween(d1: Date, d2: Date): number {
 }
 
 export function isDue(chore: Chore): boolean {
+  if (chore.snoozedUntil) {
+    if (daysBetween(new Date(), new Date(chore.snoozedUntil)) >= 0) return false;
+  }
   if (!chore.lastCompleted) return true;
   if (chore.frequency === 'once') return false;
   const days = daysBetween(new Date(chore.lastCompleted), new Date());
@@ -123,8 +126,24 @@ export function isDue(chore: Chore): boolean {
 }
 
 export function dueOffset(chore: Chore): number {
+  if (chore.snoozedUntil) {
+    const daysLeft = daysBetween(new Date(), new Date(chore.snoozedUntil));
+    if (daysLeft >= 0) return -(daysLeft + 1);
+  }
   if (!chore.lastCompleted) return 0;
   if (chore.frequency === 'once') return -999;
   const days = daysBetween(new Date(chore.lastCompleted), new Date());
   return days - FREQUENCY_DAYS[chore.frequency];
+}
+
+export function computeStreak(chore: Chore): number {
+  if (chore.frequency === 'once') return 0;
+  const history = chore.completionHistory;
+  if (!history || history.length === 0) return 0;
+  let streak = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].onTime) streak++;
+    else break;
+  }
+  return streak;
 }
